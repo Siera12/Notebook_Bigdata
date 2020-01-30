@@ -1,0 +1,30 @@
+>>Partition
+insert into table partiass3 partition (col3='damage_colName') select col1,col2,col4 from partiass2 where col3='damage';
+
+hive> select * from partiass3;
+OK
+partiass3.col1	partiass3.col2	partiass3.col4	partiass3.col3
+2	hanzo	6372	damage_colName
+3	genji	6593	damage_colName
+6	mcree	6819	damage_colName
+Time taken: 0.192 seconds, Fetched: 3 row(s)
+
+hive> alter table partiass5 drop partition (col3='damage');
+Dropped the partition col3=damage
+OK
+
+hive> show partitions partiass5;
+OK
+col3=healer
+col3=tank
+Time taken: 1.0 seconds, Fetched: 2 row(s)
+
+hive> alter table partiass5 set tblproperties ('EXTERNAL'='FALSE');
+OK
+
+So we cant delete the data as it is an external table the only way we can though is by converting it into internal table and then delete the partition and 
+then again go back to making it into external table.	
+
+
+Batch command>>>>
+views>>>>>

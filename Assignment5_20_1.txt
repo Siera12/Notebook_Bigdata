@@ -1,0 +1,46 @@
+>>>>>>word count in hive....>>>
+
+1.create table if not exists  wordcount(col1 string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+2.create table wordcount1 as Select word,count(1) as count from (select explode(split(col1,' '))as word from wordcount) w group by word order by word;
+
+2.Pokemon
+
+1.Find out the average HP (Hit points) of all the Pokémon, using the below query.
+>>select avg(hp) as avg_hp from pokemon;
+
+2.Create and insert values of existing table ‘pokemon’ into a new table ‘pokemon1’, with an additional column ‘power_rate’ to find the count of ‘powerful’ and ‘moderate’ from the table ‘pokemon1’.
+>CREATE TABLE pokemon1 as select *,if(hp>69.25875,'powerful', IF(hp<69.25875,'moderate','neutral')) as power_rate from pokemon;
+
+3.Find out the top 10 Pokémons according to their HP’s using the below query.
+> select name,hp from pokemon order by hp desc limit 10;
+
+4.Find out the top 10 Pokémons based on their Attack stat, using the below query.
+>select name,attack from pokemon order by attack desc limit 10;
+
+5.Find out the top 10 Pokémons based on their Defense stat, using the below query.
+>select name,defence from pokemon order by defence desc limit 10;
+
+6.Find out the top 10 Pokémons based on their total power.
+>select name,total from pokemon order by total desc limit 10;
+
+7.Find out the top 10 Pokémons having a drastic change in their attack and sp.attack, using the below query.
+> select name,(sp_atk-attack) as ult from pokemon order by ult limit 10;
+
+8.Find out the top 10 Pokémons having a drastic change in their defense and sp.defense, using the below query.
+>select name,(sp_def-defence) as ult from pokemon order by ult limit 10;
+
+9.Find out the top 10 fastest Pokémons, using the below query.
+> select name,speed from pokemon order by speed desc limit 10;
+
+>>>Duplicate rows
+SELECT "ID" FROM TABLE GROUP BY "ID" HAVING count(ID) > 1
+
+>>> String to date
+hive> insert overwrite table t2 select to_date(col1) from t1;
+
+
+
+
+
+
+

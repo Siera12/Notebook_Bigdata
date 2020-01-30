@@ -1,0 +1,462 @@
+Views>>>>
+views are virtual tables created on the basis of a hive query.
+doesnt contain any data of its own
+dml works,join works
+
+
+commands>>>
+
+>create view view_emp as select * from employee_temp;
+
+hive> select * from view_emp;
+OK
+1	Hanzo	45363.0	1	1988-12-14
+2	Ana	78428.0	2	1999-11-16
+3	Zarya	7427.0	3	2004-10-17
+4	Genji	9864.0	4	2003-10-13
+1	Hanzo	45363.0	1	1988-12-14
+2	Ana	78428.0	2	1999-11-16
+3	Zarya	7427.0	3	2004-10-17
+4	Genji	9864.0	4	2003-10-13
+
+
+
+
+hive> create view view2 as select * from employee_temp where eid<3;
+OK
+eid	ename	salary	departmentid	doj
+Time taken: 0.405 seconds
+hive> select * from view2;
+OK
+view2.eid	view2.ename	view2.salary	view2.departmentid	view2.doj
+1	Hanzo	45363.0	1	1988-12-14
+2	Ana	78428.0	2	1999-11-16
+1	Hanzo	45363.0	1	1988-12-14
+2	Ana	78428.0	2	1999-11-16
+
+
+
+
+hive> create view if not exists view3 as select eid as col1, ename as col2,salary as col3,departmentid as col4, doj as col5 from employee_temp;
+OK
+col1	col2	col3	col4	col5
+Time taken: 0.218 seconds
+hive> select * from view3;
+OK
+view3.col1	view3.col2	view3.col3	view3.col4	view3.col5
+1	Hanzo	45363.0	1	1988-12-14
+2	Ana	78428.0	2	1999-11-16
+
+
+
+
+
+>>>>>>>while doing joins in view the map-reduce job will not happen during creation but whwen we run select command...>>>>
+hive> create view view4 as select employee_temp.eid,employee_temp.ename,department_temp.did from employee_temp join department_temp on (employee_temp.eid=department_temp.did);
+OK
+eid	ename	did
+Time taken: 0.212 seconds
+hive> select * from view4;
+Query ID = cloudera_20200113231818_60457e29-cb54-45ba-8002-45772eb92257
+Total jobs = 1
+Execution log at: /tmp/cloudera/cloudera_20200113231818_60457e29-cb54-45ba-8002-45772eb92257.log
+2020-01-13 11:18:29	Starting to launch local task to process map join;	maximum memory = 932184064
+2020-01-13 11:18:32	Dump the side-table for tag: 1 with group count: 3 into file: file:/tmp/cloudera/1f7cdded-b7b0-4e07-b2c5-4ff4a7c6f16f/hive_2020-01-13_23-18-22_889_7254292467950778024-1/-local-10003/HashTable-Stage-3/MapJoin-mapfile21--.hashtable
+2020-01-13 11:18:32	Uploaded 1 File to: file:/tmp/cloudera/1f7cdded-b7b0-4e07-b2c5-4ff4a7c6f16f/hive_2020-01-13_23-18-22_889_7254292467950778024-1/-local-10003/HashTable-Stage-3/MapJoin-mapfile21--.hashtable (314 bytes)
+2020-01-13 11:18:32	End of local task; Time Taken: 2.507 sec.
+Execution completed successfully
+MapredLocal task succeeded
+Launching Job 1 out of 1
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1578374264033_0036, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1578374264033_0036/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1578374264033_0036
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 0
+2020-01-13 23:18:43,394 Stage-3 map = 0%,  reduce = 0%
+2020-01-13 23:18:52,000 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 2.61 sec
+MapReduce Total cumulative CPU time: 2 seconds 610 msec
+Ended Job = job_1578374264033_0036
+MapReduce Jobs Launched: 
+Stage-Stage-3: Map: 1   Cumulative CPU: 2.61 sec   HDFS Read: 7151 HDFS Write: 56 SUCCESS
+Total MapReduce CPU Time Spent: 2 seconds 610 msec
+OK
+view4.eid	view4.ename	view4.did
+1	Hanzo	1
+2	Ana	2
+3	Zarya	3
+
+
+
+hive> alter view view2 as select ename from employee_temp;
+OK
+ename
+Time taken: 0.298 seconds
+hive> select * from view2;
+OK
+view2.ename
+Hanzo
+Ana
+Zarya
+Genji
+
+
+
+hive> alter view view2 rename to view2a;
+OK
+Time taken: 0.112 seconds
+
+hive> drop view view2a;
+OK
+
+DROP VIEW only deletes metadata as it is an alias of a table in hive. and show tables also shows tables and views also.
+
+
+advantages of views>>>>
+1.it helps to make join tables as view then access it by simply opening the view so dont have to type long queries.
+2. also to give different levels of access to different people.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Indexing>>>>>
+an index acts as a reference to records.
+used to speed up the search  by only searching portion of the data not the whole data set.
+partition is done at hdfs level and indexing is done at table level.
+since hive works with large data set indexing is useful here.
+
+>create index i1 on table overwatch(col3) as 'COMPACT' with deferred rebuild;
+here we write deferred rebuild because if we want ot enter or alter values in the table then we can do that and after that we can rebuild our index.
+>alter index i1 on overwatch rebuild;
+
+
+>hive> create index i2 on table overwatch(col3) as 'COMPACT' with deferred rebuild row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+we can also store index like this ... in any file format just like tables.....
+
+>create index i3 on table overwatch(col3) as 'BITMAP'  with deferred rebuild;
+see we can create more than one index on the same table ...we created a bitmap type here.
+
+>hive> show formatted index on overwatch;
+OK
+idx_name	tab_name	col_names	idx_tab_name	idx_type	comment
+idx_name            	tab_name            	col_names           	idx_tab_name        	idx_type            	comment             
+	 	 	 	 	 
+	 	 	 	 	 
+i1                  	overwatch           	col3                	d1__overwatch_i1__  	compact             	
+i2                  	overwatch           	col3                	d1__overwatch_i2__  	compact             	
+i3                  	overwatch           	col3                	d1__overwatch_i3__  	bitmap    
+
+the type of indexing we have created first will be taken as default or in the next query.
+
+so to use bitmap we drop the first craeted compact indexes and then run again the query ... bitmap takes lees time compared to compact.
+ uses>>>
+when our data set is large and frequent use of  where clause... ad slo speed is concerned.
+not to use>>>
+when there is not frequent use of dataset. and dataset is unique.
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+UDF>>>
+to  make udf first you need to do is to make a jar file in eclipse with your custom needs..... you will need a hell lot of jars for hadoop remember to import.
+then add the jar into hive and create a temporary function ii hive and voila you have made a UDF and can be just just as other function like add,avg
+
+add jar /home/cloudera/Desktop/Export/cookiejar1.jar
+
+create temporary function f1 as 'com.hive.UpperUDF';
+
+create temporary function f1 as 'com.hive.UpperUDF';
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+TABLE PROPERTIES>>> 
+
+SKIPPING HEADER AND FOOTER>>>
+after stored as during table creation write tblproperties("skip.header.line.count"="3");
+similarly for footer write ("skip.footer.line.count"="2");
+TABLE IMMUTABILITY PROPERTY>>
+It means we cant change or add any values to the file.
+tblproperties("immutable"="true")
+overwrite works on immutable properties.
+PURGE>>>
+("auto.purge"="true")... if we set this then while dropping tables the data will not go to the trash it will be directly deleted permamently.same goes for truncate.
+NULL FORMAT PROPERTY>>>
+if any col have no value hive doesnt consider it as null. but we can make hive do that by using a property:
+("serialization.null.format"="");
+
+
+ACID PROPERTIES>>>
+AKA insert update delete stuff. hive supports this from ver. 0.14.
+Limitations of acid properties:
+1. only supports orc file format
+2.tables must be bucketed.
+3.begin,commit,rollback features are not supported.
+4.read/write is only allowed in an acid table in a session where transactional properties are set to true.
+5.we cant update the bucketed columns.
+
+enable transactions
+
+set hive.support.concurrency = true;
+set hive.enforce.bucketing = true;
+set hive.exec.dynamic.partition.mode = nonstrict;
+set hive.txn.manager = org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+set hive.compactor.initiator.on = true;
+set hive.compactor.worker.threads = a positive number on at least one instance of the Thrift metastore service;​
+
+then we need to add a property into hive-site.xml file.. and for that we need to change the permission of the file with this>>>
+chmod -R 777 hive-site.xml
+and add this property>>>
+<property>
+	<name>hive.in.test</name>
+	<value>true</true>
+</property>
+now we can use acid properties in hive....
+
+
+ORC TABLE PROPERTIES>>>>
+tblproperties("orc.compress"="zlib");
+orc.compress.size= "value"
+orc.stripe.size= "value"
+orc.row.index.stride="value"
+orc.create.index="true or false"
+orc.bloom.filter.columns
+orc.bloom.filter.fpp
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CONFIGURATIONS AND SETTINGS IN HIVE(ADVANCED)
+hive> set dfs.block.size;
+dfs.block.size=134217728
+hive> set parquet.block.size;
+parquet.block.size is undefined
+
+both dfs and parquet should have the same block size as want a parquet block to fit inside of the hdfs block
+here it shows undefined as we have textfile set as default.
+
+hive> set hive.default.fileformat;
+hive.default.fileformat=TextFile
+hive> set hive.default.fileformat=orc;
+hive> set hive.default.fileformat;
+hive.default.fileformat=orc
+
+hive> set hive.mapred.mode;
+hive.mapred.mode=nonstrict
+if it is set to strict then the order by clause has to be followed by the limit clause.
+
+>>>hive> set hive.groupby.orderby.position.alias;
+hive.groupby.orderby.position.alias=false
+hive> set hive.groupby.orderby.position.alias=true;
+hive> set hive.groupby.orderby.position.alias;
+hive.groupby.orderby.position.alias=true
+
+hive> select col1,col2 from table3 order by 2;
+
+col1	col2
+Lio	500
+lock	650
+leo	700
+Bhut	800
+Pars	800
+Lesa	900
+Mark	1000
+Loopa	1100
+Frank	1150
+see we can dont need to write the fullname of the columns after set that property to true.
+
+to forcefully set the no. of reducers no matter what use this command>>
+set mapred.reduce.tasks=1;
+
+hive> set hive.exec.reducers.bytes.per.reducer;
+hive.exec.reducers.bytes.per.reducer=256000000
+this property specefies the number of bytes given to each reducers.
+
+this gives the max no. of reducers.
+set hive.exec.reducers.max;
+hive.exec.reducers.max=1009
+SPECULATIVE EXECUTION>>>>>
+When a node seems to run slower the application master seems to make the task run on some other node.so at the same time we have same tasks running on different nodes.
+the nodes finishes first stays and the slower one is deleted or trashed... the adv is that if some node is slower due to memory unavailability in the node so 
+switching is beneficial here. but it has some disadvantages too>>>
+we are running the same thing on two nodes for no reason.....
+
+hive> set mapred.map.tasks.speculative.execution;
+mapred.map.tasks.speculative.execution=true
+
+this can also be done for reducers by just writing making it reduce in place of map.
+
+TO SET BUCKETING DEFAULT>>>>>
+set hive.enforce.bucketing;
+TO SET MAP JOIN DEFAULT>>>>>
+set hive.auto.convert.join=true;
+
+MERGING OF FILES IN HIVE>>>>
+see screenshot merge.jpg too lazy to write at the moment
+
+PARALLISM PROPERTY IN HIVE>>>>>
+with this we can accomplish tasks in parallel fashion which helps in speeding up the process as it doesnt have to wait for each tsak to complete but it also have some disadvantages
+like for complex queries it can make lock on the database which can create some problems.
+set hive.exec.parallel=true;
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+EXECUTING HIVE QUERIES FROM BASH SHELL>>>>
+go to the hadoop path and to execute hive queries write -e and then the query in bash.
+can write multiple queries too just like this: -e 'select * from emp;select * from gg;'
+SCRIPTING>>>
+To run scripts in hive just write all the commands in a file with format hql. then run like this: source /home/....file.hql
+to run the script in bash all we need to do is write: hive -f /home/.....file.hql
+
+-e to run hive queries
+-f to run scripts
+-h print help info
+-s silent mode to avoid operational messages
+-i<filename> file init
+-h<server> connect hive server to remote host
+-p<port number> connect hive server on port number
+-v Execute in verbose mode
+
+UNIX COMMANDS IN HIVE>>>>
+just put !then write the commands.
+to run hadoop commands just write dfs then command... here ls c* works unnlike the unix commmands
+
+VARIABLES IN HIVE>>>
+hive> set i=40;
+hive> set i;
+i=40
+
+hive> set hiveconf:i;
+hiveconf:i=40
+
+hiveconf sets the value locally where hivevar sets the value globally.
+by default the variable type is set to hiveconf.
+
+example query>> select * from tab where col1=${hiveconf:i};
+for hivevar we can just write the i dorectly no need to write hivevar:
+ both are limited fir this session only
+if you want them permamently then we have to set in hiverc file
+
+IMPORTANT STUFF>>>>>
+we can have two values with same variable... suppose we make a hiveconf variable with same name but assign different values then it will have different values
+for two diffrent types of variables.
+
+EXAMPLE OF USING VARIABLES IN HIVE SHELL>>>
+hive --hivevar deptno=12 -e 'select * from ggtab where col5=${deptno};'
+
+hive --hivevar empid=col1 --hiveconf tablename=emp_tab --hivevar deptno=10 -f /home...file.hql
+
+SUBSTITUTING VALUE OF A VARIABLE>>>>
+to assign a value of a variable to another variable we need to>>
+set hive.variable.substitute=true;
+
+hive> set i=9;
+hive> set j=${hiveconf:i};
+hive> set j;
+j=9
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+COMPRESSION IN HIVE>>>>
+set mapred.compress.map.output;
+set mapred.map.output.compression.codec;
+set mapred.output.compress=true; to set o/p files compression
+set mapred.output.compression.codec=anappy;
+
+HIVERC FILE>>>>
+with this file we can set any property that we need to set when we start any huve session
+the property that we set here runs first when we open any new session of hive.
+we need to make a .hiverc file inside of conf directory and then add propeties there.
+
+CARTESIAN PRODUCT>>>>
+select * from table1,table2; this will do catesian product
+that is it will produce nXn rows and the input splits will be nXn;
+
+ARCHIVING>>>
+it doesnt reduce space in hdfs cuz we are just storing it in hdfs only ... it reduces the load from then namenode
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+TEZ>>>>
+set hive.execution.engine=tez;
+cloudera doesnt support tez.hortonworks does
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+LOAD XML FILES TO HIVE>>>
+
+first you need to add a jar into hive called hive xml serde..... then you can load xml files into tables......
+
+CREATE TABLE book_details(TITLE STRING, AUTHOR STRING,COUNTRY STRING,COMPANY STRING,PRICE FLOAT,YEAR INT)
+ROW FORMAT SERDE 'com.ibm.spss.hive.serde2.xml.XmlSerDe'
+WITH SERDEPROPERTIES (
+"column.xpath.TITLE"="/BOOK/TITLE/text()",
+"column.xpath.AUTHOR"="/BOOK/AUTHOR/text()",
+"column.xpath.COUNTRY"="/BOOK/COUNTRY/text()",
+"column.xpath.COMPANY"="/BOOK/COMPANY/text()",
+"column.xpath.PRICE"="/BOOK/PRICE/text()",
+"column.xpath.YEAR"="/BOOK/YEAR/text()")
+STORED AS INPUTFORMAT 'com.ibm.spss.hive.serde2.xml.XmlInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+TBLPROPERTIES ("xmlinput.start"="<BOOK","xmlinput.end"= "</BOOK>");
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+SCD's >>>>>>>
+scd is of mainly 3 types: 0 1 and 2
+0: value remains same as they were at the time of insertion of the dimension record.
+1:overwrites the old data with new data
+2: keeps entore history that its all the records and they can be kept by 1.versioning 2.flagging 3.effective date
+
+select 
+    >     case when cdc_codes ='Update' Then table3s
+    >         when cdc_codes = 'NoChange' then table2s
+    >         when cdc_codes = 'New' then table3s
+    >         when cdc_codes = 'Deletes' then table2s
+    >    end
+    > from (select 
+    >     case    when table2.col1=table3.col1 and table2.col2=table3.col2 then  'NoChange'
+    >             when table2.col1=table3.col1 and table2.col2<>table3.col2 then  'Update'
+    >             when table2.col1 is null then 'New'
+    >             when table3.col1 is null then 'Deletes'
+    >              end as cdc_codes,
+    >         concat(table2.col1,',',table2.col2) as table2s,
+    >         concat(table3.col1,',',table3.col2) as table3s
+    >     from table2
+    >     full outer join table3 on table2.col1=table3.col1) as b1
+    > ;
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+WINDOW FUNCTION LAST VALUE:
+windowtable.col1	windowtable.col2	windowtable.col3	windowtable.col4
+1	ana	healer	7878
+2	hanzo	damage	6372
+3	genji	damage	6593
+4	zarya	tank	3472
+5	reinhardt	tank	6383
+6	mcree	damage	6819
+7	Orisa	tank	64738
+8	reaper	healer	2532
+9	echo	damage	6372
+10	soldier76	damage	6372
+
+
+hive> SELECT *, LAST_VALUE(col1) OVER (PARTITION BY col3 ORDER BY COL4 DESC) FROM windowtable;
+Query ID = cloudera_20200116030808_c5550665-ae30-4820-acc1-83861ef66f4c
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1578374264033_0051, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1578374264033_0051/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1578374264033_0051
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2020-01-16 03:08:38,199 Stage-1 map = 0%,  reduce = 0%
+2020-01-16 03:08:49,049 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.89 sec
+2020-01-16 03:09:00,924 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 5.3 sec
+MapReduce Total cumulative CPU time: 5 seconds 300 msec
+Ended Job = job_1578374264033_0051
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 5.3 sec   HDFS Read: 9680 HDFS Write: 222 SUCCESS
+Total MapReduce CPU Time Spent: 5 seconds 300 msec
+OK
+windowtable.col1	windowtable.col2	windowtable.col3	windowtable.col4	_wcol0
+6	mcree	damage	6819	6
+3	genji	damage	6593	3
+10	soldier76	damage	6372	2
+9	echo	damage	6372	2
+2	hanzo	damage	6372	2
+1	ana	healer	7878	1
+8	reaper	healer	2532	8
+7	Orisa	tank	64738	7
+5	reinhardt	tank	6383	5
+4	zarya	tank	3472	4
+Time taken: 34.239 seconds, Fetched: 10 row(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

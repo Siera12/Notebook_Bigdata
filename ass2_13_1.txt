@@ -1,0 +1,76 @@
+File formats>>>>>
+
+TEXTFILE format is a famous input/output format used in Hadoop. In Hive if we define a table as TEXTFILE it can load data of from CSV (Comma Separated Values),
+delimited by Tabs, Spaces, and JSON data. This means fields in each record should be separated by comma or space or tab or it may be JSON(JavaScript Object Notation)
+data. By default, if we use TEXTFILE format then each line is considered as a record.
+
+Sequence files are flat files consisting of binary key-value pairs. When Hive converts queries to MapReduce jobs, it decides on the appropriate key-value pairs
+to be used for a given record. Sequence files are in the binary format which can be split and the main use of these files is to club two or more smaller files and make 
+them as a one sequence file.
+
+RCFILE is used when we want to perform operations on multiple rows at a time.
+RCFILEs are flat files consisting of binary key/value pairs, which shares many similarities with SEQUENCEFILE. RCFILE stores columns of a table in form of record in a 
+columnar manner. It first partitions rows horizontally into row splits and then it vertically partitions each row split in a columnar way. RCFILE first stores the 
+metadata of a row split, as the key part of a record, and all the data of a row split as the value part. This means that RCFILE encourages column oriented storage 
+rather than row oriented storage.
+
+ORC stands for Optimized Row Columnar which means it can store data in an optimized way than the other file formats. ORC reduces the size of the original data up to 
+75%(eg: 100GB file will become 25GB). As a result the speed of data processing also increases. ORC shows better performance than Text, Sequence and RC file formats.
+An ORC file contains rows data in groups called as Stripes along with a file footer. ORC format improves the performance when Hive is processing the data.
+
+Avro and parquet>>>>>
+avro--- it is good if we know that our data needs to change frequently..
+The fundamental difference in terms of how to use either format is this: Avro is a Row based format. If you want to retrieve the data as a whole, you can use Avro. 
+Parquet is a Column based format. If your data consists of lot of columns but you are interested in a subset of columns, you can use Parquet.
+AVRO is open source project that provides data serialization and data exchange services for Hadoop.
+
+Apache Avro is a language-neutral data serialization system.
+ You can exchange data between Hadoop ecosystem and program written in any programming languages. 
+ Avro is not really a file format, it’s a file format plus a serialization and de-serialization framework.
+Avro depends heavily on its schema. It allows every data to be written with no prior knowledge of the schema.
+ It serializes fast and the resulting serialized data is lesser in size. 
+Avro schemas are defined with JSON that simplifies its implementation in languages with JSON libraries
+
+Parquet is a column-oriented binary file format. The parquet is highly efficient for the types of large-scale queries.
+ Parquet is especially good for queries scanning particular columns within a particular table.
+ The Parquet table uses compression Snappy, gzip; currently Snappy by default.
+instead of just storing rows of data adjacent to one another you also store column values adjacent to each other.
+ So datasets are partitioned both horizontally and vertically. 
+This is particularly useful if your data processing framework just needs access to a subset of data that is stored on disk as it
+ can access all values of a single column very quickly without reading whole records.
+ Parquet format is computationally intensive on the write side, but it reduces a lot of I/O cost to make great read performance.
+ It enjoys more freedom than ORC file in schema evolution, that it can add new columns to the end of the structure.
+ If you’re chopping and cutting up datasets regularly then these formats can be very beneficial to the speed of your application,
+
+
+
+SQOOP>>>>>
+
+import all tables>>>>
+sqoop import-all-tables --connect jdbc:mysql://localhost/d1 --username root --password cloudera -m1;
+
+import all except some tables>>>>
+sqoop import-all-tables --connect jdbc:mysql://localhost/d3 --username root --password cloudera --exclude-tables emp_sql4,emp_sql6 -m1;
+
+Hive Export>>>>>
+sqoop export --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table emp_sql --export-dir /user/hive/warehouse/e16/ -m1;
+
+
+--Direct>>>>>
+[cloudera@quickstart /]$ sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table emp_sql --target-dir '/user/hive/warehouse/e22' --fields-terminated-by '\t' --direct;
+Warning: /usr/lib/sqoop/../accumulo does not exist! Accumulo imports will fail.
+Please set $ACCUMULO_HOME to the root of your Accumulo installation.
+20/01/13 02:52:57 INFO sqoop.Sqoop: Running Sqoop version: 1.4.6-cdh5.13.0
+20/01/13 02:52:57 WARN tool.BaseSqoopTool: Setting your password on the command-line is insecure. Consider using -P instead.
+20/01/13 02:52:58 INFO manager.MySQLManager: Preparing to use a MySQL streaming resultset.
+20/01/13 02:52:58 INFO tool.CodeGenTool: Beginning code generation
+20/01/13 02:52:58 INFO manager.SqlManager: Executing SQL statement: SELECT t.* FROM `emp_sql` AS t LIMIT 1
+20/01/13 02:52:58 INFO manager.SqlManager: Executing SQL statement: SELECT t.* FROM `emp_sql` AS t LIMIT 1
+20/01/13 02:52:58 INFO orm.CompilationManager: HADOOP_MAPRED_HOME is /usr/lib/hadoop-mapreduce
+Note: /tmp/sqoop-cloudera/compile/0634f56ca2d31b959f8e619a157efb26/emp_sql.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+20/01/13 02:53:01 INFO orm.CompilationManager: Writing jar file: /tmp/sqoop-cloudera/compile/0634f56ca2d31b959f8e619a157efb26/emp_sql.jar
+20/01/13 02:53:01 ERROR tool.ImportTool: Import failed: No primary key could be found for table emp_sql. Please specify one with --split-by or perform a sequential import with '-m 1'.
+
+--Compress>>>>>>
+$ sqoop import <switches> --compress

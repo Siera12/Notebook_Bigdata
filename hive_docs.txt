@@ -1,0 +1,726 @@
+SECTION2:8 Create Databases
+
+hive> create database d1;
+
+hive> create database if not exists d1;
+
+since theres already a db with same name hive just ignores this command.
+
+hive> describe database d1;
+OK
+d1		hdfs://quickstart.cloudera:8020/user/hive/warehouse/d1.db	cloudera	USER	
+Time taken: 0.233 seconds, Fetched: 1 row(s)
+
+hive> create database if not exists d2 comment 'this is my first comment';
+OK
+Time taken: 0.045 seconds
+hive> describe database extended d2;
+OK
+d2	this is my first comment	hdfs://quickstart.cloudera:8020/user/hive/warehouse/d2.db	cloudera	USER	
+
+hive> create database if not exists d3 with dbproperties ('creator/god'='Mrinmoy','created for'='fun');
+OK
+Time taken: 0.053 seconds
+hive> describe database extended d3;
+OK
+d3		hdfs://quickstart.cloudera:8020/user/hive/warehouse/d3.db	cloudera	USER	{created for=fun, creator/god=Mrinmoy}
+Time taken: 0.017 seconds, Fetched: 1 row(s)
+
+hive> show databases;
+OK
+d1
+d2
+d3
+default
+Time taken: 0.02 seconds, Fetched: 4 row(s)
+hive> use d3
+    > ;
+OK
+Time taken: 0.019 seconds
+after this the deafult database would be d3 from default.
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
+SECTION2:8 TABLE CREATION and loading data:
+
+2 types:the difference is b/w how the metadata is stored:
+>> Internal table: hive is the sole owner of tables data and metadata. If dlt then table data is lost.
+>> External table: hive only has metadata. so if we dlt no table data is lost. only table definition is lost and cannot be accesed by hive.
+
+hive> create table if not exists table1 (col1 string,col2 string,col3 array<string>,col4 int)  
+OK
+Time taken: 0.234 seconds
+
+hive> create table if not exists table2 (col1 string,col2 string,col3 array<string>,col4 int)
+    > ;
+OK
+if we do not mention deatails it takes the deafult values.
+
+hive> set hive.metastore.warehouse.dir;
+hive.metastore.warehouse.dir=/user/hive/warehouse
+
+By deafult the data about the tables created gets stored in this directory.
+
+hive> create table if not exists table3 (col1 string,col2 string,col3 array<string>,col4 int) row format delimited fields terminated by ',' collection items terminated by ':' lines terminated by '\n' stored as textfile location '/user/cloudera/table3';
+OK
+Time taken: 0.073 seconds
+
+here by using location we can change the dir where the table will be created.
+
+hive> load data local inpath'/home/cloudera/Desktop/data.txt' into table table1;
+Loading data to table d3.table1
+Table d3.table1 stats: [numFiles=1, totalSize=98]
+OK
+Time taken: 0.502 seconds<this is how we load data into tables><into appends the data but overwrite does wat it says dummy>
+
+hive> select * from table1;
+OK
+4875A	Overwatch:genji	["Japan"]	84785
+7854B	Destiny2:HUnter	["GGWorld"]	458412
+785B	OW2:Hanzo	["Japan"]	56564
+Time taken: 0.317 seconds, Fetched: 3 row(s)
+
+In case of internal tables the only way to access the tables is through hive.if we drop then we loose both metadata and data.
+by deafult table created is internal.
+
+hive> drop table table7;
+OK
+Time taken: 0.448 seconds
+ Now if we drop the table then both metadata and data will be loast as it is controlled by hive.
+
+
+
+----------------------------External table----------------------------------------------------------------------------------
+hive> create external table if not exists table12 (col1 string,col2 array<string>,col3 string,col4 int) row format delimited fields terminated by ',' collection items terminated by ':' lines terminated by'\n' stored as textfile;
+OK
+Time taken: 0.119 seconds
+hive> load data local inpath '/home/cloudera/Desktop/data.txt' into table table12;
+Loading data to table default.table12
+Table default.table12 stats: [numFiles=1, totalSize=98]
+OK
+Time taken: 0.347 seconds
+hive> select * from table12;
+OK
+4875A	["Overwatch","genji"]	Japan	84785
+7854B	["Destiny2","HUnter"]	GGWorld	458412
+785B	["OW2","Hanzo"]	Japan	56564
+Time taken: 0.058 seconds, Fetched: 3 row(s)
+hive> drop table table12;
+OK
+Time taken: 0.082 seconds
+hive> select * from table12;
+FAILED: SemanticException [Error 10001]: Line 1:14 Table not found 'table12'
+
+the table schema/linkage of hive is gone bu the dat is there as it is a managed by hdfs not hive.
+
+after all this the metadata will be deleted that is the linkage with the table nd data is gone but the data will be present in the dir as it is handled by hdfs.
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+Section 2:12 Insert Statement
+
+hive> set hive.cli.print.header=true;   < It shows the column names of the tables>
+
+---------------------------------------
+insert into tables
+
+hive> insert into table77 select col1,col2,col3 from table76;
+Query ID = cloudera_20191226004040_a53583c3-f1f4-4afd-90ae-caada4c00620
+Total jobs = 3
+Launching Job 1 out of 3
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1577187477856_0001, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1577187477856_0001/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1577187477856_0001
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 0
+2019-12-26 00:40:52,486 Stage-1 map = 0%,  reduce = 0%
+2019-12-26 00:40:59,905 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.62 sec
+MapReduce Total cumulative CPU time: 1 seconds 620 msec
+Ended Job = job_1577187477856_0001
+Stage-4 is selected by condition resolver.
+Stage-3 is filtered out by condition resolver.
+Stage-5 is filtered out by condition resolver.
+Moving data to: hdfs://quickstart.cloudera:8020/user/hive/warehouse/table77/.hive-staging_hive_2019-12-26_00-40-42_603_2761589366626473808-1/-ext-10000
+Loading data to table default.table77
+Table default.table77 stats: [numFiles=1, numRows=6, totalSize=232, rawDataSize=226]
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1   Cumulative CPU: 1.62 sec   HDFS Read: 4183 HDFS Write: 304 SUCCESS
+Total MapReduce CPU Time Spent: 1 seconds 620 msec
+OK
+col1	col2	col3
+Time taken: 18.762 seconds
+
+for overwrite just write overwrite in place of into.
+-------------------------------------------------
+section 2:13
+<inserting data into 2 tables at the same time from one table.>
+
+from emp1 insert into table dev1 select col1,col2,col3 where col3='Dev' insert into table test1 select col1,col2,col3 where col3='test'; 
+Query ID = cloudera_20191226011616_73bd83fa-1eb3-459e-8924-599b19f10e0e
+Total jobs = 5
+Launching Job 1 out of 5
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_1577187477856_0004, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1577187477856_0004/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1577187477856_0004
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 0
+2019-12-26 01:16:14,132 Stage-2 map = 0%,  reduce = 0%
+2019-12-26 01:16:20,365 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 2.0 sec
+MapReduce Total cumulative CPU time: 2 seconds 0 msec
+Ended Job = job_1577187477856_0004
+Stage-5 is selected by condition resolver.
+Stage-4 is filtered out by condition resolver.
+Stage-6 is filtered out by condition resolver.
+Stage-11 is selected by condition resolver.
+Stage-10 is filtered out by condition resolver.
+Stage-12 is filtered out by condition resolver.
+Moving data to: hdfs://quickstart.cloudera:8020/user/hive/warehouse/dev1/.hive-staging_hive_2019-12-26_01-16-06_948_2621866596596400809-1/-ext-10000
+Moving data to: hdfs://quickstart.cloudera:8020/user/hive/warehouse/test1/.hive-staging_hive_2019-12-26_01-16-06_948_2621866596596400809-1/-ext-10002
+Loading data to table default.dev1
+Loading data to table default.test1
+Table default.dev1 stats: [numFiles=1, numRows=0, totalSize=0, rawDataSize=0]
+Table default.test1 stats: [numFiles=1, numRows=0, totalSize=0, rawDataSize=0]
+MapReduce Jobs Launched: 
+Stage-Stage-2: Map: 1   Cumulative CPU: 2.0 sec   HDFS Read: 5253 HDFS Write: 77 SUCCESS
+Total MapReduce CPU Time Spent: 2 seconds 0 msec
+OK
+col1	col2	col3
+Time taken: 16.121 seconds
+------------------------------------------------------------------------
+ALTER TABLE
+
+hive> desc emp1;
+OK
+col1                	string              	                    
+col2                	string              	                    
+col3                	string              	                    
+Time taken: 0.065 seconds, Fetched: 3 row(s)
+
+hive> alter table emp1 add columns (col4 string);
+OK
+Time taken: 0.112 seconds
+
+hive> desc emp1;
+OK
+col1                	string              	                    
+col2                	string              	                    
+col3                	string              	                    
+col4                	string              	                    
+Time taken: 0.051 seconds, Fetched: 4 row(s)
+hive> alter table emp1 change col1 new_col1 string after col2;
+OK
+Time taken: 0.142 seconds
+hive> desc emp1;
+OK
+col2                	string              	                    
+new_col1            	string              	                    
+col3                	string              	                    
+col4                	string              	                    
+Time taken: 0.064 seconds, Fetched: 4 row(s)
+hive> alter table emp1 change col3 new_col3 string;
+OK
+Time taken: 0.11 seconds
+hive> desc emp1;
+OK
+col2                	string              	                    
+new_col1            	string              	                    
+new_col3            	string              	                    
+col4                	string              	                    
+Time taken: 0.062 seconds, Fetched: 4 row(s)
+
+hive> alter table emp1 rename to new_emp1;
+OK
+Time taken: 0.083 seconds
+
+hive> alter table new_emp1 replace columns(newcol1 string,newcol2 string,newcol3 string);
+OK
+
+hive> select * from new_emp1;
+OK
+new_emp1.newcol1	new_emp1.newcol2	new_emp1.newcol3
+Hanzo	Dps	Dev
+Genji	dps	test
+Ana	heal	dev
+Moira	heal	test
+
+hive> desc formatted new_emp1;  < shows metadata in a readable format>>
+
+alter table new_emp1 set fileformat avro;
+OK
+Time taken: 0.149 seconds
+hive> desc formatted new_emp1;
+OK
+col_name	data_type	comment
+# col_name            	data_type           	comment             
+	 	 
+newcol1             	string              	                    
+newcol2             	string              	                    
+newcol3             	string              	                    
+	 	 
+# Detailed Table Information	 	 
+Database:           	default             	 
+Owner:              	cloudera            	 
+CreateTime:         	Thu Dec 26 01:27:33 PST 2019	 
+LastAccessTime:     	UNKNOWN             	 
+Protect Mode:       	None                	 
+Retention:          	0                   	 
+Location:           	hdfs://quickstart.cloudera:8020/user/hive/warehouse/new_emp1	 
+Table Type:         	MANAGED_TABLE       	 
+Table Parameters:	 	 
+	COLUMN_STATS_ACCURATE	false               
+	auto.purge          	true                
+	last_modified_by    	cloudera            
+	last_modified_time  	1577357895          
+	numFiles            	1                   
+	numRows             	-1                  
+	rawDataSize         	-1                  
+	totalSize           	58                  
+	transient_lastDdlTime	1577357895          
+	 	 
+# Storage Information	 	 
+SerDe Library:      	org.apache.hadoop.hive.serde2.avro.AvroSerDe	 
+InputFormat:        	org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat	 
+OutputFormat:       	org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat	 
+Compressed:         	No                  	 
+Num Buckets:        	-1                  	 
+Bucket Columns:     	[]                  	 
+Sort Columns:       	[]                  	 
+Storage Desc Params:	 	 
+	colelction.delim    	:                   
+	field.delim         	,                   
+	line.delim          	\n                  
+	serialization.format	,                   
+Time taken: 0.056 seconds, Fetched: 39 row(s)
+------------------------------------------------------------------------------------------------------------
+
+hive> select col2 from sort_tab order by col2;
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 2.93 sec   HDFS Read: 6543 HDFS Write: 69 SUCCESS
+Total MapReduce CPU Time Spent: 2 seconds 930 msec
+OK
+col2
+NULL
+NULL
+1
+1
+1
+1
+1
+1
+1
+1
+1
+12
+2
+2
+2
+2
+2
+2
+2
+3
+4
+4
+4
+4
+4
+5
+5
+5
+5
+5
+5
+6
+6
+
+distribute assigns the numbers to different reducers..... then reducers do the reducing. 
+cluster by= distribute + sort
+Order by uses 1 reducer...so we use limit clause to limit the n of rows cuz we can have a very huge no of rows so it will take a lot time while using a single reducer.
+sort by does sorting within a reducer. sort by clause doent guarentee full sorting of data. so final o/p will comprise two o/p from 2 reducers as we have 2 reducers.
+distribute by is used make sure which values goes to which reducer... its in the name dummy. it ensures each reducers get non overlapping values.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SECTION3:16
+
+hive> select unix_timestamp('24-12-2019 16:46:00');
+OK
+-61206621240
+Time taken: 1.229 seconds, Fetched: 1 row(s)
+
+DATE FUNCTIONS: To_Date, YEAR, MONTH,DAY,HOUR,MINUTE,SECOND, DATEDIFF,DATE_ADD,DATE_SUB
+
+MATH FUNCTIONS: 
+
+hive> select ceil(8.4);
+OK
+9
+Time taken: 0.11 seconds, Fetched: 1 row(s)
+hive> select floor(8.4);
+OK
+8
+Time taken: 0.084 seconds, Fetched: 1 row(s)
+
+hive> select round(3.2546,3);
+OK
+3.255
+
+hive> select rand();
+OK
+0.6233694451596852
+Time taken: 0.096 seconds, Fetched: 1 row(s)
+
+hive> select(69);
+OK
+69
+Time taken: 0.063 seconds, Fetched: 1 row(s)
+hive> select(69);
+OK
+69
+Time taken: 0.055 seconds, Fetched: 1 row(s)
+------------------------------------------------------------------------------------------------------------------------------------------------
+Setion 3:17 String 
+
+hive> select concat(cust_id,'-',cust_name) from tabassign;
+OK
+_c0
+#cust_id-  #cust_name
+GGYZ333519YS-Allison
+GGYZ333519YS-Allison
+GGYZ333519YS-Allison
+
+hive> select length(cust_name) from tabassign;
+OK
+_c0
+12
+7
+7
+7
+7
+like thi swe have upper lower and padding
+
+hive> select lpad(cust_name,12,'gg') from tabassign;
+OK
+_c0
+  #cust_name
+gggggAllison
+gggggAllison
+gggggAllison
+gggggAllison
+<sam for rpad>
+
+hive> select ltrim('      Mrinmoy');
+OK
+_c0
+Mrinmoy
+we can also use reverse and repeat.
+
+hive> select repeat(cust_name,3) from tabassign;
+OK
+_c0
+  #cust_name  #cust_name  #cust_name
+AllisonAllisonAllison
+AllisonAllisonAllison
+AllisonAllisonAllison
+AllisonAllisonAllison
+-----------------------------------------------------------------------------------------------------------------------------------------
+Section 3:18
+
+hive> select split('Overwatch:Genji',':');
+OK
+_c0
+["Overwatch","Genji"]
+
+hive> select substr('Overwatch is my favourite game',8);
+OK
+_c0
+ch is my favourite game
+
+hive> select substr('overwatch is my fav game',4,15);
+OK
+_c0
+rwatch is my fa
+Time taken: 0.047 seconds, Fetched: 1 row(s)
+hive> select instr('overwatch is my fav game',a);
+FAILED: SemanticException [Error 10004]: Line 1:40 Invalid table alias or column reference 'a': (possible column names are: )
+hive> select instr('overwatch is my fav game','a');
+OK
+_c0
+6
+-------------------------------------------------------------------------
+Section 3:18Conditional statement
+
+hive> select if(col1='4875A',col2,col3) from tab99;
+OK
+_c0
+Overwatch
+GGWorld
+Japan
+Time taken: 0.063 seconds, Fetched: 3 row(s)
+
+hive> select isnull(col1) from table14;
+OK
+_c0
+false
+false
+false
+false
+false
+false
+false
+false
+false
+
+Select coalesce(col1,col2,col3) as sel_Fields from table14;
+suppose there are a lot of null values.. in many columns.this command will find any values present in any column and print it...
+
+Select sup_id,NVL(col2,col3) from table14;
+NVL will look if col2 is null it will select col3 and if col2 is not null it will select col2;
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+20:view
+explode takes array as i/p and results the the elements of the array as separate rows.
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+22:Rank>>>>>>>>>>
+
+hive> select col1,col2,rank() over(order by col2 desc)  as ranking from table14;
+Query ID = cloudera_20191229223838_01363240-d62d-48ca-8801-2b6cd6185909
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1577187477856_0017, Tracking URL = http://quickstart.cloudera:8088/proxy/application_1577187477856_0017/
+Kill Command = /usr/lib/hadoop/bin/hadoop job  -kill job_1577187477856_0017
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2019-12-29 22:38:10,465 Stage-1 map = 0%,  reduce = 0%
+2019-12-29 22:38:16,673 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 1.07 sec
+2019-12-29 22:38:22,917 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 3.18 sec
+MapReduce Total cumulative CPU time: 3 seconds 180 msec
+Ended Job = job_1577187477856_0017
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 3.18 sec   HDFS Read: 8856 HDFS Write: 159 SUCCESS
+Total MapReduce CPU Time Spent: 3 seconds 180 msec
+OK
+col1	col2	ranking
+John	1300	1
+Lui	1300	1
+Albert	1200	3
+Frank	1150	4
+Loopa	1100	5
+fransis	1000	6
+Mark	1000	6
+pars	900	8
+Lesa	900	8
+Pars	800	10
+leo	700	11
+jack	700	11
+lock	650	13
+Time taken: 19.272 seconds, Fetched: 13 row(s)
+<do the same for dense_rank, row_number.... just put it there....>
+
+ select col1,col2,row_number() over(partioned by order by col2 desc) as ranking from table14;
+col1	col2	ranking
+Albert	1200	1
+Frank	1150	1
+John	1300	1
+John	12	2
+Lesa	900	1
+Loopa	1100	1
+Lui	1300	1
+Mark	1000	1
+Pars	800	1
+fransis	1000	1
+jack	700	1
+jack	1	2
+leo	700	1
+lock	650	1
+pars	900	1
+
+lateral view and explode>>>>
+hive> select col1,colgg from table16 lateral view explode(col2) dummy as colgg;
+OK
+col1	colgg
+Salman Rushide	Grimus
+Salman Rushide	Shame
+Salman Rushide	Fury
+Thomas Otway	Don Carlos
+Thomas Otway	The Orphan
+Ben Jonson	Volpone
+Ben Jonson	Epicene
+John Milton	Arcades
+John Milton	Comus
+Time taken: 0.052 seconds, Fetched: 9 row(s)
+
+we can also write 2 or more columns at the same time.
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+Second Highest Salary in MySQL
+Select  MAX(salary) from Employee WHERE salary NOT IN (Select  MAX(salary) from Employee);
+------------------------------
+21:Rlike
+hive> select 'Overwatch' rlike 'er';
+OK
+_c0
+true
+Time taken: 0.056 seconds, Fetched: 1 row(s)
+hive> select 'Overwatch' rlike '*er';
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Partioning>>>>>>>>>>>>>>>>>
+
+Here we have a  table named tabpart now we are making partition of that table for the hr department....
+create table if not exists part_dept(col1 int,col3 string,col4 int) partitioned by (col2 string) row format delimited fields terminated by ',' collection items terminated by ':' lines terminated by '\n' stored as textfile;
+OK
+insert into table part_dept partition (col2='HR') select col1,col2,col4 from tabpart where col2='HR';
+hive> select * from part_dept;
+OK
+40	HR	3747	HR
+40	HR	3603	HR
+40	HR	2698	HR
+40	HR	3613	HR
+40	HR	2916	HR
+40	HR	2564	HR
+By using load command  we can load different files into partition tables if the data we need to load is already separated.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+Dynamic partition
+by def dynamic partition is turned off but we can turn it on by this command>>>> set hive.exec.dynamic.partition=true;
+also we can turn the mode from strict to non-strict with this command>>>> set hive.exec.dynamic.partition.mode=true;
+
+create table if not exists tab12(col1 string,col3 string,col4 string) partitioned by (col2 string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile; 
+OK
+Time taken: 1.643 seconds
+
+ create table tab33(col1 string,col2 string,col3 string,col4 string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+OK
+Time taken: 0.149 seconds
+
+load data local inpath '/home/cloudera/Desktop/data.txt' into table tab33;
+Loading data to table default.tab33
+Table default.tab33 stats: [numFiles=1, totalSize=44]
+OK
+Time taken: 0.627 seconds
+hive> select * from tab33;
+OK
+1	hr	qweerr	88
+2	gg	asdfg	98
+3	test	zxcv	78
+
+insert into table tab12 partition (col2) select col1,col3,col4,col2 from tab33;
+
+after running this there will be partitions automatically made based on the selected columns.
+
+>>> Altering partitions
+hive> show partitions tab12;
+OK
+col2=gg
+col2=hr
+col2=test
+Time taken: 0.119 seconds, Fetched: 3 row(s)
+
+hive> alter table tab12 drop partition (col2='gg');
+Dropped the partition col2=gg
+OK
+
+hive> alter table tab12 add partition (col2='gg');
+OK
+ but after we add a partition thi sis empty and we need to manually add data to it.
+
+load data local inpath '/home/cloudera/Desktop/data.txt' into table tab12 partition (col2='gg');
+Loading data to table default.tab12 partition (col2=gg)
+Partition default.tab12{col2=gg} stats: [numFiles=1, totalSize=44]
+OK
+
+Now If we make a directory for partitons manually hive doesnt recognise it ... so to make it aware we need to.
+we can just add directory or >>>>>
+
+msck repair table tab12;
+OK
+Partitions not in metastore:	tab12:col2=gg112
+Repair: Added partition to metastore tab12:col2=gg112
+Time taken: 0.277 seconds, Fetched: 2 row(s)
+hive> show partitions tab12;
+OK
+col2=gg
+col2=gg112
+col2=hr
+col2=test
+Time taken: 0.083 seconds, Fetched: 4 row(s)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+BUCKETING
+>>all the same column values of a bucketed values will go into the same bucket.
+>>can be used along side of partitioning.
+
+by default bucketing is not enabled>>>> set hive.enforce.bucketing= true;
+bcuz we are using dynamic partitioning so >> set hive.exec.dynamic.partition.mode =nonstrict;
+
+create table if not exists dept_buck2 (deptno int,empname string,sal int,location string) partitioned by (deptname string) clustered by (location) into 4 buckets row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+OK
+Time taken: 0.184 seconds
+
+insert into table dept_buck2 partition (deptname) select col1,col3,col4,col5,col2 from dept_buck4;
+
+>>the number of buckets is equal to the number of reducers.
+
+>>here we have the bucketed table as dept_bu which has 3 cols,, but we are inserting data froma table with 5 col where the extra col is dept and have partitioned the table on the basis of that ... so the data of 
+column is not there just used for partition.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Joins
+Inner join>>> hive only accepts = ..... < or > isnt accepted......
+select emptab.eid,emptab.ename,emptab.salary,emptab.departmentid,emptab.doj,department1.dname,department1.departmentid,department1.doc from emptab join department1 on (emptab.departmentid=department1.departmentid);
+Outer join>>>>
+Left outer join>>... in this case the left table all values are shown and only the common ones from the right and there will be null values for the ones from lwft which are not there in right.
+right outer join>> same for right side
+Full outer join>> it keep both matching and non matching rows... from both tables
+emptab.eid	emptab.ename	emptab.salary	emptab.departmentid	emptab.doj	department1.dname	department1.departmentid	department1.doc
+1	Hanzo	45363.0	1	1988-12-14	Damage	1	1988-12-12
+1	Hanzo	45363.0	1	1988-12-14	Damage	1	1988-12-12
+2	Ana	78428.0	2	1999-11-16	healer	2	1999-12-23
+2	Ana	78428.0	2	1999-11-16	healer	2	1999-12-23
+3	Zarya	7427.0	3	2004-10-17	Tank	3	1999-10-28
+3	Zarya	7427.0	3	2004-10-17	Tank	3	1999-10-28
+4	Genji	9864.0	4	2003-10-13	NULL	NULL	NULL
+4	Genji	9864.0	4	2003-10-13	NULL	NULL	NULL
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Map JOIN>>>>>
+select /*+MAPJOIN (emptab)*/ emptab.eid,emptab.ename,emptab.salary,emptab.departmentid,emptab.doj,department1.dname,department1.departmentid,department1.doc from emptab join department1 on (emptab.departmentid=department1.departmentid);
+
+hive> set hive.auto.convert.join=true;
+hive> set hive.mapjoin.smalltable.filesize=25000000;
+
+Bucket map join>>>>>
+>Let’s understand with an example. For suppose if one table has 2 buckets then the other table must have either 2 buckets or a multiple of 2 buckets (2, 4, 6, and so on). Further, since the preceding condition is satisfied then the joining can be done on the mapper side only. Else a normal inner join is performed. Therefore, it implies that only the required buckets are fetched on the mapper side and not the complete table.
+Hence, onto each mapper, only the matching buckets of all small tables are replicated. As a result of this, the efficiency of the query improves drastically. However, make sure data does not sort in a bucket map join.
+
+>Also, note that by default Hive does not support a bucket map join. So, we need to set the following property  to true for the query to work as this join:
+
+>set hive.optimize.bucketmapjoin = true
+Basically, Join is done in Mapper only.  However, let’s understand it in this way, the mapper processing bucket 1 for table A will only fetch bucket 1 of table B.
+
+>Use Case of Bucket Map Join
+To be more specific we use this feature with several scenarios. Like:
+i. While all the tables are large.
+ii. Also, while all tables bucketed using the join columns.
+iii. Moreover, while the number of buckets in one table is a multiple of the number of buckets in the other table.
+iii. Also, when all the tables do not sort.
+
+created 2 tables with 8 and 2 buckets each and inserted data into it and now im joining.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+THIS IS ASSIGNMENT PART IGNORE IT.
+hive> create external table if not exists tabext8(col1 int,col2 string,col3 array<string>,col4 struct<city:string,state:int>,col5 map<string,string>,col6 uniontype<int,string>) row format delimited fields terminated by ',' collection items terminated by ':' map keys terminated by '@' lines terminated by '\n' stored as textfile location '/user/cloudera/dirG15/'; 
+OK
+Time taken: 0.051 seconds
+hive> select * from tabext8;
+OK
+1	Hanzo	["ran1","ran2"]	{"city":"japan","state":23}	{"damage":"genji"}	{0:12}
+2	Genji	["run1","run3"]	{"city":"USA","state":34}	{"healer":"moira"}	{1:"qwww"}
+Time taken: 0.073 seconds, Fetched: 2 row(s)
+------------------------

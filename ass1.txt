@@ -1,0 +1,62 @@
+date format change>>>
+hive> select from_unixtime(unix_timestamp('2016/06/01','yyyy/MM/dd'),'dd-MM-yyyy');
+OK
+01-06-2016
+Time taken: 0.122 seconds, Fetched: 1 row(s)
+
+or>>>>>>>>>>>>>>>
+
+hive> select date_format('1999-12-10','dd-MM-yyyy');
+OK
+10-12-1999
+Time taken: 0.07 seconds, Fetched: 1 row(s)
+
+
+or>>>>>>>>>>>
+
+mysql> select date_format('1999-12-10','%d-%m-%y');
++--------------------------------------+
+| date_format('1999-12-10','%d-%m-%y') |
++--------------------------------------+
+| 10-12-99                             |
++--------------------------------------+
+1 row in set (0.00 sec)
+
+
+add date>>>
+hive> select date_add('2019-10-12',8);
+OK
+2019-10-20
+
+
+SQL where clause>>>>
+mysql> select ename from Employee where did=11;
++--------------+
+| ename        |
++--------------+
+| Mrinmoy      |
+| Mrigfdafnmoy |
++--------------+
+
+mysql> select ename from Employee where salary=653;
++--------------+
+| ename        |
++--------------+
+| Mrigfdafnmoy |
++--------------+
+1 row in set (0.00 sec)
+
+
+sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table Employee --where "salary=653" 
+sqoop eval --connect jdbc:mysql://localhost/d1 --username root --password cloudera --e "select * from Employee where salary=653";
+Warning: /usr/lib/sqoop/../accumulo does not exist! Accumulo imports will fail.
+Please set $ACCUMULO_HOME to the root of your Accumulo installation.
+20/01/10 01:49:19 INFO sqoop.Sqoop: Running Sqoop version: 1.4.6-cdh5.13.0
+20/01/10 01:49:19 WARN tool.BaseSqoopTool: Setting your password on the command-line is insecure. Consider using -P instead.
+20/01/10 01:49:19 INFO manager.MySQLManager: Preparing to use a MySQL streaming resultset.
+-------------------------------------------------------
+| eid   | ename                | did   | salary       | 
+-------------------------------------------------------
+| 2     | Mrigfdafnmoy         | 11    | 653          | 
+-------------------------------------------------------
+--target-dir /user/hive/warehouse/e9 -m1;

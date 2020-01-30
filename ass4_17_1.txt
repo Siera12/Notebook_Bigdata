@@ -1,0 +1,22 @@
+hive> create table if not exists assignacad (Distict_ID string,Distributor_name string,Buy_rate float,Sell_rate float,volumeIN int,volumeOut int,year int) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+hive> create table if not exists assignacad (Distict_ID string,Distributor_name string,Buy_rate float,Sell_rate float,volumeIN int,volumeOut int,year int) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+hive> select Distributor_name,SUM(volumeout) from assignacad group by(Distributor_name);
+select distict_id,sum(volumeout) as totalvol from assignacad order by(totalvol) DESC limit 10;
+
+select distributor_name,sum(volumeout) as totalvol from assignacad group by(distributor_name) order by(totalvol) limit 10;
+
+hive> select distict_id,year,(volumein-volumeout)as dif from assignacad where (volumein-volumeout>500) order by dif;
+
+
+
+olympic 
+1. hive> select country,sum(total_medals) as tome from olympic1 group by country;
+2. select year,sum(total_medals) as toem from olympic1 where country="India" group by year; 
+3.hive> select country,sum(total_medals) from olympic1 group by country;
+4.hive> select country,sum(gold_medals) from olympic1 group by country;
+5.hive> select country,year from olympic1 where sport="Shooting" and total_medals>0 order by year;
+
+
+SMB acadgild>>>>>acid properties>>>> optimization tech in hive>>>>>> speculative execution>>> controlling parallism>>>>dont use streamtable>>>>map side join..
+
+map side join ....smb join>>>> flatten function for word count in hive.

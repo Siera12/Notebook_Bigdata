@@ -1,0 +1,13 @@
+package com.hive;
+import org.apache.hadoop.hive.ql.exec.UDF;
+import org.apache.hadoop.io.Text;
+
+public final class UpperUDF extends UDF {
+    public Text evaluate(double f)
+{
+    double temp=(f-32.0)/9.0;
+    double c=temp*5;
+    
+      return new Text(Double.toString(c));
+      }
+}

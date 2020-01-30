@@ -1,0 +1,94 @@
+createmysqlSQOOP >..........
+
+sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table emp_sql --target-dir '/user/hive/warehouse/e1' -m1;
+
+sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table Employee --where "salary=653" --target-dir /user/hive/warehouse/e9 -m1;
+
+sqoop eval --connect jdbc:mysql://localhost/d1 --username root --password cloudera --e "select * from Employee where salary=653";
+Warning: /usr/lib/sqoop/../accumulo does not exist! Accumulo imports will fail.
+Please set $ACCUMULO_HOME to the root of your Accumulo installation.
+20/01/10 01:49:19 INFO sqoop.Sqoop: Running Sqoop version: 1.4.6-cdh5.13.0
+20/01/10 01:49:19 WARN tool.BaseSqoopTool: Setting your password on the command-line is insecure. Consider using -P instead.
+20/01/10 01:49:19 INFO manager.MySQLManager: Preparing to use a MySQL streaming resultset.
+-------------------------------------------------------
+| eid   | ename                | did   | salary       | 
+-------------------------------------------------------
+| 2     | Mrigfdafnmoy         | 11    | 653          | 
+-------------------------------------------------------
+
+
+sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table Employee --target-dir '/user/hive/warehouse/e10' --split-by did;
+[cloudera@quickstart /]$ sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --columns eid,ename,did,salary --table Employee --target-dir '/user/hive/warehouse/e14' --fields-terminated-by ','
+ --hive-import --create-hive-table --hive-table default.emp_sq_hive -m1;
+
+import all tables>>>>
+sqoop import-all-tables --connect jdbc:mysql://localhost/d1 --username root --password cloudera -m1;
+
+import all except some tables>>>>
+sqoop import-all-tables --connect jdbc:mysql://localhost/d3 --username root --password cloudera --exclude-tables emp_sql4,emp_sql6 -m1;
+
+Incremental append>>>>>
+sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table Employee --target-dir /user/hive/warehouse/e21 --incremental append --check-column eid --last-value 5 -m1;​
+
+Hive Export>>>>>
+sqoop export --connect jdbc:mysql://localhost/d1 --username root --password cloudera --table emp_sql --export-dir /user/hive/warehouse/e16/ -m1;
+
+
+
+
+
+MySQL>>>>
+
+to open sql>>>>
+ mysql -u root -p;
+Enter password: 
+
+
+mysql> create database d1;
+Query OK, 1 row affected (0.04 sec)
+
+mysql> use d1;
+Database changed
+
+mysql> create table emp_sql(id int(10),name varchar(20),dept_id int(10));
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> insert into emp_sql values(1,'Mrinmoy',12); 
+Query OK, 1 row affected (0.04 sec)
+
+mysql> select * from emp_sql;
++------+---------+---------+
+| id   | name    | dept_id |
++------+---------+---------+
+|    1 | Mrinmoy |      12 |
++------+---------+---------+
+1 row in set (0.00 sec)
+
+
+create table Employee(eid int(5),ename varchar(20),did int(5),salary float(10),primary key(eid),foreign key(did) references Department(did));
+
+create table Department(did int(5),dname varchar(20),primary key(did));
+
+
+
+
+mysql> insert into Employee values(4,'Ana',12,3653),(5,'Hanzo',13,7584);
+Query OK, 2 rows affected (0.00 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+
+mysql> select ename from Employee where did=11;
++--------------+
+| ename        |
++--------------+
+| Mrinmoy      |
+| Mrigfdafnmoy |
++--------------+
+
+mysql> select ename from Employee where salary=653;
++--------------+
+| ename        |
++--------------+
+| Mrigfdafnmoy |
++--------------+
+1 row in set (0.00 sec)
+

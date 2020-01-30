@@ -1,0 +1,1 @@
+window function: https://bigdataprogrammers.com/windowing-functions-in-hive/

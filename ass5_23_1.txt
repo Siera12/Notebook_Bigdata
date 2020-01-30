@@ -1,0 +1,81 @@
+1.MYSQL AND SQOOP:
+
+CREATE TABLE>>>create table df_transaction (account_no int(10),merch_name varchar(20),merch_category varchar(20),txn_amount int(10));
+
+
+LOAD DATA>>>>>load data infile '/home/cloudera/Desktop/merch.csv' into table df_transaction fields terminated by ',' enclosed by '"' lines terminated by '\n';
+
+
+2.IMPORT QUERY AND TABLE CREATION>>>>>>sqoop import --connect jdbc:mysql://localhost/d1 --username root --password cloudera --columns account_no,merch_name,merch_category,
+txn_amount --table df_transaction --target-dir '/user/hive/warehouse/e53' --fields-terminated-by ',' --hive-import --create-hive-table 
+--hive-table default.df_transaction -m1;
+
+
+HIVE PART:
+
+TO GET DISTINCT MERCH NAME AND CATEGORY>>
+select distinct merch_name,merch_category from df_transaction;
+
+merch_name	merch_category
+Ana	Medicine
+Genji	Household
+Hanzo	Household
+Mercy	Medicine
+Orissa	Electronics
+Zarya	Electronics
+
+MAKE A TABLE WITH MERCHANT NAME AND MERCH TYPE DESC>>>
+create table if not exists df_merchant_master (merchant_name string,merchant_type_description string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+
+3.INSERING DATA INTO THE NEWLY CREATE DTABLE>>>>>
+insert into df_merchant_master select distinct merch_name,merch_category from df_transaction; 
+
+JOIN THE TWO TABLES ON MERCHANT NAME>>>>>
+select df_transaction.account_no,df_transaction.merch_name,df_transaction.merch_category,df_transaction.txn_amount,df_merchant_master.merchant_name,df_merchant_master.merchant_type_description from df_transaction join df_merchant_master on (df_transaction.merch_name=df_merchant_master.merchant_name);
+
+df_transaction.account_no	df_transaction.merch_name	df_transaction.merch_category	df_transaction.txn_amount	df_merchant_master.merchant_name	df_merchant_master.merchant_type_description
+3	Ana	Medicine	7549	Ana	Medicine
+3	Ana	Medicine	9783	Ana	Medicine
+3	Ana	Medicine	8953	Ana	Medicine
+3	Ana	Medicine	5632	Ana	Medicine
+2	Genji	Household	6343	Genji	Household
+2	Genji	Household	3063	Genji	Household
+2	Genji	Household	2761	Genji	Household
+1	Hanzo	Household	3453	Hanzo	Household
+4	Mercy	Medicine	9837	Mercy	Medicine
+6	Orissa	Electronics	8739	Orissa	Electronics
+6	Orissa	Electronics	3791	Orissa	Electronics
+5	Zarya	Electronics	7363	Zarya	Electronics
+5	Zarya	Electronics	1949	Zarya	Electronics
+Time taken: 30.472 seconds, Fetched: 13 row(s)
+
+CREATE ANOTHER TABLE WITH UNIQUE COLUMNS AFTER JOIN and rows too>>>>>
+create table if not exists df_transactional_final (account_no int,merch_name string,merch_type string,txn_amount int) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+
+INSERTING JOIN RESULT>>>>
+insert into df_transactional_final select df_transaction.account_no,df_transaction.merch_name,df_transaction.merch_category,df_transaction.txn_amount from df_transaction join df_merchant_master on (df_transaction.merch_name=df_merchant_master.merchant_name);
+
+NOW CREATE NEW CUSTOMER TABLE>>>
+create table if not exists df_customer (account_no int,total_tran_amount int,avg_tran_amount int,count_tran int,no_dist_merch_name int,no_dist_merch_cat int) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+
+AFTER THAT ENTER DATA IN TABLE>>>
+ACCOUNT NO,TOTAL TRANSACTIONAL AMT,AVG,COUNT TRN,NO.DIST_MERCH_NAMES,NO_DIST_MERCH_CATEGORY>>>>>>
+
+
+insert into df_customer select account_no,sum(txn_amount),avg(txn_amount),count(txn_amount),count(DISTINCT(merch_name)),count(DISTINCT(merch_type)) from df_transactional_final group by account_no; 
+
+hive> select * from df_customer;
+OK
+df_customer.account_no	df_customer.total_tran_amount	df_customer.avg_tran_amount	df_customer.count_tran	df_customer.no_dist_merch_name	df_customer.no_dist_merch_cat
+1	3453	3453	1	1	1
+2	12167	4055	3	1	1
+3	31917	7979	4	1	1
+4	9837	9837	1	1	1
+5	9312	4656	2	1	1
+6	12530	6265	2	1	1
+ tip >> dont make table in 1 command and then insert in another do it at onces
+
+
+
+
+
