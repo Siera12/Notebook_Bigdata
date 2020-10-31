@@ -14,9 +14,9 @@ public class Main {
 			
 			File file = new File("/home/cloudera/Desktop/small.txt");
 			FileWriter fr = new FileWriter(file, true);
-			String name = i+","+df.getCity()+","+df.getNumberText(5);
-			System.out.println(name);
-			fr.write(name+"\n");
+			String dtname = i+","+df.getCity()+","+df.getNumberText(5);
+			System.out.println(dtname);
+			fr.write(dtname+"\n");
 			fr.close();
 			i++;
 		}
