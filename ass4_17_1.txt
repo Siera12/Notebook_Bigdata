@@ -9,7 +9,7 @@ hive> select distict_id,year,(volumein-volumeout)as dif from assignacad where (v
 
 
 
-olympic 
+olympics
 1. hive> select country,sum(total_medals) as tome from olympic1 group by country;
 2. select year,sum(total_medals) as toem from olympic1 where country="India" group by year; 
 3.hive> select country,sum(total_medals) from olympic1 group by country;
